@@ -188,7 +188,7 @@ details ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--muted);
     </div>
     <div id="info" hidden>
       <p class="addr">D'après le plan APS Baticoo Habitat du 10/01/2022 (plans RDC, R+1, R+2 et coupe AA)</p>
-      <p class="addr ver">Version du 18/11/2026 à 21 h 50</p>
+      <p class="addr ver">Version du 18/11/2026 à 23 h 35</p>
       <div class="meta">
         <div><small>Emprise</small><strong>≈ 6,2×11,76</strong></div>
         <div><small>Niveaux</small><strong>RDC + 2</strong></div>
@@ -244,7 +244,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-const BUILD = '2026-11-18 21:50';
+const BUILD = '2026-11-18 23:35';
 
 // ---------- cotes (mètres) ----------
 // Repère plan : X = largeur (0 = nu intérieur du mur mitoyen gauche vu de la rue),
@@ -679,19 +679,24 @@ function setLevel(l) {
   if (S.view === 'walk') startWalk(); else if (S.view === 'top') topCam();
   applyVisibility();
 }
-function frameOffset() { // décale l'image pour que la maison ne soit pas sous le panneau
-  const w = innerWidth, h = innerHeight;
-  if (S.view === 'walk') camera.clearViewOffset();
-  else if (w > 700) camera.setViewOffset(w, h, -Math.min(182, w * 0.22), 0, w, h);
-  else camera.setViewOffset(w, h, 0, Math.round(h * 0.14), w, h);
+function frameOffset() { // décale l'image pour que la maison reste dans la zone libre (hors panneau)
+  const w = innerWidth, h = innerHeight, r = $('panel').getBoundingClientRect();
+  if (S.view === 'walk') { camera.clearViewOffset(); return { fx: 1, fy: 1 }; }
+  if (w > 700) { const pw = Math.min(r.right + 12, w * 0.5); camera.setViewOffset(w, h, -pw / 2, 0, w, h); return { fx: (w - pw) / w, fy: 1 }; }
+  const hv = Math.max(h * 0.35, Math.min(h, r.top) - 8); // hauteur libre au-dessus du panneau
+  camera.setViewOffset(w, h, 0, Math.round((h - hv) / 2), w, h);
+  return { fx: 1, fy: hv / h };
 }
 function orbitCam() {
   controls.enabled = true;
-  frameOffset();
-  const cut = S.level !== 'all', k = Math.max(1, 0.72 / camera.aspect);
-  controls.target.copy(V(CX, CY, cut ? levelZ() + 0.5 : 3.8));
+  const f = frameOffset();
+  const cut = S.level !== 'all';
+  controls.target.copy(V(CX, CY, cut ? levelZ() + 0.5 : 4.6));
   const dir = cut ? new THREE.Vector3(9, 17, 15) : new THREE.Vector3(11, 12, 20);
-  camera.position.copy(controls.target).add(dir.normalize().multiplyScalar(26 * k));
+  // distance pour voir toute la maison (sphère englobante) dans la zone libre
+  const Rv = cut ? 8.0 : 10.5, Rh = cut ? 7.0 : 8.0, t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const d = Math.max(Rv / (t * f.fy), Rh / (t * camera.aspect * f.fx)) * 1.08;
+  camera.position.copy(controls.target).add(dir.normalize().multiplyScalar(Math.max(22, d)));
   controls.update();
 }
 function topCam() {
@@ -768,7 +773,7 @@ $('v-walk').onclick = () => setView('walk');
 ['t-roof', 't-labels', 't-furn', 't-nb'].forEach(id => $(id).addEventListener('change', applyVisibility));
 $('infoBtn').onclick = () => { const o = $('info').hidden; $('info').hidden = !o; $('infoBtn').setAttribute('aria-expanded', String(o)); };
 $('minBtn').onclick = () => { const p = $('panel'), m = !p.classList.contains('min'); p.classList.toggle('min', m); $('minBtn').setAttribute('aria-expanded', String(!m)); };
-$('toggle').onclick = () => { const p = $('panel'), c = !p.classList.contains('collapsed'); p.classList.toggle('collapsed', c); $('toggle').textContent = c ? 'Afficher les réglages' : 'Masquer les réglages'; $('toggle').setAttribute('aria-expanded', String(!c)); };
+$('toggle').onclick = () => { const p = $('panel'), c = !p.classList.contains('collapsed'); p.classList.toggle('collapsed', c); $('toggle').textContent = c ? 'Afficher les réglages' : 'Masquer les réglages'; $('toggle').setAttribute('aria-expanded', String(!c)); frameOffset(); invalidate(); };
 if (matchMedia('(max-width:700px)').matches) $('toggle').click();
 for (const ev of ['input', 'change', 'click', 'keyup', 'pointerdown', 'wheel']) addEventListener(ev, invalidate, true);
 controls.addEventListener('change', invalidate);
