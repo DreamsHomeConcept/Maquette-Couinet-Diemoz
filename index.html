@@ -188,7 +188,7 @@ details ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--muted);
     </div>
     <div id="info" hidden>
       <p class="addr">D'après le plan APS Baticoo Habitat du 10/01/2022 (plans RDC, R+1, R+2 et coupe AA)</p>
-      <p class="addr ver">Version du 19/11/2026 à 16 h 15</p>
+      <p class="addr ver">Version du 19/11/2026 à 21 h 20</p>
       <div class="meta">
         <div><small>Emprise</small><strong>≈ 6,2×11,76</strong></div>
         <div><small>Niveaux</small><strong>RDC + 2</strong></div>
@@ -244,7 +244,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-const BUILD = '2026-11-19 16:15';
+const BUILD = '2026-11-19 21:20';
 
 // ---------- cotes (mètres) ----------
 // Repère plan : X = largeur (0 = nu intérieur du mur mitoyen gauche vu de la rue),
@@ -259,6 +259,7 @@ const CTH = 1 / Math.hypot(1, SLOPE), STH = SLOPE * CTH;
 const roofTop = u => RIDGE - SLOPE * Math.abs(u - YR);
 const roofUnder = u => roofTop(u) - ROOF_T / CTH;
 const V = (X, Y, z = 0) => new THREE.Vector3(X, z, -Y);
+const SDB_VELUX = { side: 'front', x: 0.86, y: 4.80, w: 0.78, l: 0.98 }; // fenêtre de toit de la salle de bains (19/11)
 const CX = W / 2, CY = D / 2;
 const $ = id => document.getElementById(id);
 
@@ -573,7 +574,16 @@ slab(G.lev[2], R(3.84, 0, W, 0.71), Z2 - 0.02, Z2, M.parq);
   // WC et salle de bains
   wallX(g, 6.16, 6.23, 0, 1.72, z0, z0 + 2.50, [], M.part);
   wallYroof(g, 1.72, 1.79, 4.19, 7.14, z0, [door(5.10, 5.83, z0), door(6.35, 6.98, z0)], M.part);
-  box(g, 0, 1.79, 4.19, 7.14, z0 + 2.50, z0 + 2.53, M.ceil); // plafond SdB à 2,50
+  // plafond SdB à 2,50, ouvert sous la fenêtre de toit : puits de lumière blanc jusqu'au rampant
+  {
+    const v = SDB_VELUX, hx = v.w / 2, hy = v.l / 2 * CTH, zc = z0 + 2.53;
+    const [px0, px1, py0, py1] = [v.x - hx, v.x + hx, v.y - hy, v.y + hy];
+    box(g, 0, 1.79, 4.19, py0, z0 + 2.50, zc, M.ceil); box(g, 0, 1.79, py1, 7.14, z0 + 2.50, zc, M.ceil);
+    box(g, 0, px0, py0, py1, z0 + 2.50, zc, M.ceil); box(g, px1, 1.79, py0, py1, z0 + 2.50, zc, M.ceil);
+    box(g, px0 - 0.03, px1 + 0.03, py0 - 0.03, py0, zc, ru(py0), M.ceil);
+    box(g, px0 - 0.03, px1 + 0.03, py1, py1 + 0.03, zc, ru(py1), M.ceil);
+    vpolyY(g, px0 - 0.03, px0, py0, py1, zc, ru, M.ceil); vpolyY(g, px1, px1 + 0.03, py0, py1, zc, ru, M.ceil);
+  }
   // chambre 2 (rue)
   wallX(g, 4.19, 4.26, 0, 3.84, z0, ru(4.26), [door(2.80, 3.65, z0)], M.part);
   wallYroof(g, 3.77, 3.84, 0, 4.19, z0, [], M.part); // prolongée jusqu'à la façade rue (demande du 19/11)
@@ -591,9 +601,11 @@ slab(G.lev[2], R(3.84, 0, W, 0.71), Z2 - 0.02, Z2, M.parq);
 }
 
 // ---------- toiture deux pans (faîtage parallèle à la rue) ----------
-const VELUX = [ // {pan, X centre, Y centre en plan, largeur, longueur en pente}
-  { side: 'rear', x: 2.90, y: 8.03, w: 0.78, l: 1.18 },  // chambre 1
-  { side: 'front', x: 2.00, y: 2.68, w: 0.78, l: 1.18 }, // chambre 2
+const VELUX = [ // {pan, X centre, Y centre en plan, largeur, longueur en pente} ; tailles données par M. Diallo le 19/11
+  { side: 'rear', x: 1.70, y: 8.03, w: 1.14, l: 1.18 },  // chambre 1 (25 m²) : 2 fenêtres 114 × 118
+  { side: 'rear', x: 3.70, y: 8.03, w: 1.14, l: 1.18 },
+  { side: 'front', x: 2.00, y: 2.68, w: 1.14, l: 1.18 }, // chambre 2 (17 m²) : 1 fenêtre 114 × 118
+  SDB_VELUX, // salle de bains : 1 fenêtre 78 × 98, puits de lumière dans le plafond
 ];
 function roofSlope(side) {
   const front = side === 'front';
