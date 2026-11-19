@@ -188,7 +188,7 @@ details ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--muted);
     </div>
     <div id="info" hidden>
       <p class="addr">D'après le plan APS Baticoo Habitat du 10/01/2022 (plans RDC, R+1, R+2 et coupe AA)</p>
-      <p class="addr ver">Version du 18/11/2026 à 23 h 35</p>
+      <p class="addr ver">Version du 19/11/2026 à 16 h 15</p>
       <div class="meta">
         <div><small>Emprise</small><strong>≈ 6,2×11,76</strong></div>
         <div><small>Niveaux</small><strong>RDC + 2</strong></div>
@@ -244,7 +244,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-const BUILD = '2026-11-18 23:35';
+const BUILD = '2026-11-19 16:15';
 
 // ---------- cotes (mètres) ----------
 // Repère plan : X = largeur (0 = nu intérieur du mur mitoyen gauche vu de la rue),
@@ -576,7 +576,7 @@ slab(G.lev[2], R(3.84, 0, W, 0.71), Z2 - 0.02, Z2, M.parq);
   box(g, 0, 1.79, 4.19, 7.14, z0 + 2.50, z0 + 2.53, M.ceil); // plafond SdB à 2,50
   // chambre 2 (rue)
   wallX(g, 4.19, 4.26, 0, 3.84, z0, ru(4.26), [door(2.80, 3.65, z0)], M.part);
-  wallYroof(g, 3.77, 3.84, 0.78, 4.19, z0, [], M.part);
+  wallYroof(g, 3.77, 3.84, 0, 4.19, z0, [], M.part); // prolongée jusqu'à la façade rue (demande du 19/11)
   // garde-corps de la trémie côté rue
   box(g, 3.84, W, 0.71, 0.75, z0, z0 + 1.0, M.rail);
   // bibliothèque du palier

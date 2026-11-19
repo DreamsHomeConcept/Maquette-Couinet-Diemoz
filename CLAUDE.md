@@ -15,4 +15,4 @@ Aperçu privé : https://claude.ai/artifact/VqgLD7KV2PLXVDTSGPUqmH (republier ap
 ## Décisions du propriétaire (18/11/2026)
 Plan APS Baticoo du 10/01/2022. Ignorer les notes manuscrites. Seul le mur gauche est mitoyen.
 Fenêtres bandeau arrière : appui à 1,00 m. Toiture validée. Loggia du 1er réunie à la cuisine (≈20,2 m²).
-2e : les deux placards sous rampants supprimés (ch. 1 ≈25,4 m², ch. 2 ≈17,9 m²).
+2e : les deux placards sous rampants supprimés (ch. 1 ≈25,4 m², ch. 2 ≈17,9 m²). Cloison ch. 2 / trémie (C14) prolongée jusqu'à la façade rue (19/11).
