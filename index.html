@@ -244,7 +244,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-const BUILD = '2026-11-19 21:20';
+const BUILD = '2026-11-24 11:10';
 
 // ---------- cotes (mètres) ----------
 // Repère plan : X = largeur (0 = nu intérieur du mur mitoyen gauche vu de la rue),
@@ -709,7 +709,36 @@ function orbitCam() {
   const Rv = cut ? 8.0 : 10.5, Rh = cut ? 7.0 : 8.0, t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   const d = Math.max(Rv / (t * f.fy), Rh / (t * camera.aspect * f.fx)) * 1.08;
   camera.position.copy(controls.target).add(dir.normalize().multiplyScalar(Math.max(22, d)));
+  if (!cut) cadrerEntiere(dir, f);
   controls.update();
+}
+// Vue « Tout » : la maison (et sa voisine si elle est affichée) entière et centrée dans la zone libre, dès l'ouverture
+function cadrerEntiere(dir, f) {
+  const objets = [...G.ext, G.roof]; if (G.nb.visible) objets.push(G.nb);
+  const b = new THREE.Box3(); objets.forEach(o => b.expandByObject(o));
+  if (b.isEmpty()) return;
+  const coins = []; for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) coins.push(new THREE.Vector3(x, y, z));
+  const c = camera.clone(); c.clearViewOffset();
+  const mx = 0.9 * f.fx, my = 0.88 * f.fy, u = dir.clone().normalize();
+  const cible = b.getCenter(new THREE.Vector3());
+  const mesure = d => { // bornes de l'image des coins, caméra à la distance d de la cible
+    c.position.copy(cible).addScaledVector(u, d); c.lookAt(cible); c.updateMatrixWorld(); c.updateProjectionMatrix();
+    let x0 = 9, x1 = -9, y0 = 9, y1 = -9;
+    for (const p of coins) { const q = p.clone().project(c); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+    return { x0, x1, y0, y1 };
+  };
+  let d = 40;
+  for (let i = 0; i < 4; i++) {
+    let lo = 3, hi = 120; // distance la plus courte où tout tient
+    for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2, r = mesure(m); if (Math.max(-r.x0, r.x1) / mx <= 1 && Math.max(-r.y0, r.y1) / my <= 1) hi = m; else lo = m; }
+    d = hi;
+    const r = mesure(d); // recentre : on déplace la cible du décalage restant
+    const right = new THREE.Vector3().setFromMatrixColumn(c.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(c.matrixWorld, 1);
+    const demi = d * Math.tan(THREE.MathUtils.degToRad(c.fov / 2));
+    cible.addScaledVector(right, (r.x0 + r.x1) / 2 * demi * c.aspect).addScaledVector(up, (r.y0 + r.y1) / 2 * demi);
+  }
+  controls.target.copy(cible);
+  camera.position.copy(cible).addScaledVector(u, Math.min(d, controls.maxDistance));
 }
 function topCam() {
   if (S.level === 'all') { S.level = '1'; ['all', '0', '1', '2'].forEach(k => $('n-' + k).setAttribute('aria-pressed', String(k === '1'))); }
